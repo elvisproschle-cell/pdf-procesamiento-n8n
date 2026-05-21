@@ -30,7 +30,7 @@ jobs:
 import requests, os, subprocess
 from docx import Document
 
-webhook = "https://github.com/elvisproschle-cell/pdf-procesamiento-n8n.git"
+webhook = "https://elvisproschle.app.n8n.cloud/webhook-test/69098724-78a4-43af-98fe-7c86308295c9"
 archivo = "${archivo}"
 
 def extraer_texto(archivo):
