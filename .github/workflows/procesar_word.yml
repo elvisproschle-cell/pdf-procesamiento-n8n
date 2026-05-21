@@ -1,0 +1,59 @@
+name: Procesar Word y enviarlos a n8n
+
+on:
+  push:
+    paths:
+      - "*.doc"
+      - "*.docx"
+
+jobs:
+  procesar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v3
+
+      - name: Instalar dependencias
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y antiword
+          pip install python-docx requests
+
+      - name: Procesar archivos Word
+        run: |
+          for archivo in *.doc *.docx; do
+            [ -e "$archivo" ] || continue
+            echo "Procesando $archivo"
+
+            python3 - <<EOF
+import requests, os, subprocess
+from docx import Document
+
+webhook = "https://github.com/elvisproschle-cell/pdf-procesamiento-n8n.git"
+archivo = "${archivo}"
+
+def extraer_texto(archivo):
+    if archivo.endswith(".docx"):
+        doc = Document(archivo)
+        return "\n".join([p.text for p in doc.paragraphs])
+    if archivo.endswith(".doc"):
+        result = subprocess.run(["antiword", archivo], capture_output=True, text=True)
+        return result.stdout
+    return ""
+
+texto = extraer_texto(archivo)
+
+files = {
+    "file": (archivo, open(archivo, "rb"), "application/octet-stream")
+}
+
+data = {
+    "nombre_archivo": archivo,
+    "texto_extraido": texto
+}
+
+r = requests.post(webhook, files=files, data=data)
+print("Respuesta de n8n:", r.text)
+EOF
+          done
